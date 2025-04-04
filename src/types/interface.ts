@@ -35,7 +35,6 @@ export interface AssetSourceDefault {
 export interface AssetSourceAem {
   type: 'aem-assets';
   seoName: (product: Product['product']) => string;
-  // seoName: string;
   format: "gif" | "jpg" | "jpeg" | "png" | "webp";
   rotate?: 90 | 180 | 270;
   crop?: Array<string | number>;

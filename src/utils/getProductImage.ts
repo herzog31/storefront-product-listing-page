@@ -101,7 +101,6 @@ const generateOptimizedAEMImages = (
     product: Product['product'],
     options: AssetSourceAem
 ): { src: string; srcset: any }[] => {
-  console.log(options);
   const seoName = options.seoName(product);
   const format = options.format;
 
