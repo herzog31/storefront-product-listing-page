@@ -96,33 +96,47 @@ const generateOptimizedImages = (
   return imageUrlArray;
 };
 
+const resolveAEMImageUrl = (url: string, seoNameString: string, options: AssetSourceAem): string => {
+  const { type: _, seoName, format, ...urlParams } = options
+  const [base] = url.split('?');
+  const params = {
+    ...urlParams,
+    crop: urlParams.crop?.join(','),
+    size: urlParams.size?.join(','),
+  }
+
+  const stringEntries = Object.entries(params).map(([key, val]) => [`${key}`, `${val}`]);
+  const queryParams = new URLSearchParams(stringEntries)
+  return `${base}/as/${seoNameString}.${format}?${queryParams.toString()}`;
+};
+
 const generateOptimizedAEMImages = (
     imageUrls: string[],
     product: Product['product'],
     options: AssetSourceAem
 ): { src: string; srcset: any }[] => {
-  const seoName = options.seoName(product);
-  const format = options.format;
+  const { type: _, seoName, format, ...urlParams } = options
+  const seoNameString = seoName(product);
 
-  const imageUrlArray: Array<{ src: string, srcset: string }> = [];
+  const imageUrlArray: Array<{ src: string, srcset: string[] }> = [];
 
   for (const imageUrl of imageUrls) {
-    const [base] = imageUrl.split('?');
-    const queryParams = new URLSearchParams();
-    if (options.rotate) queryParams.append('rotate', options.rotate.toString());
-    if (options.crop) queryParams.append('crop', options.crop.join(','));
-    if (options.flip) queryParams.append('flip', options.flip);
-    if (options.size) queryParams.append('size', options.size.join(','));
-    if (options.width) queryParams.append('width', options.width.toString());
-    if (options.height) queryParams.append('height', options.height.toString());
-    if (options.quality) queryParams.append('quality', options.quality.toString());
-    if (options.smartCrop) queryParams.append('smartCrop', options.smartCrop);
-    if (options.attachment) queryParams.append('attachment', options.attachment);
-    const src = `${base}/as/${seoName}.${format}?${queryParams.toString()}`;
-    imageUrlArray.push({ src: src, srcset: src });
+    const src = resolveAEMImageUrl(imageUrl, seoNameString, {
+      ...options,
+      width: options.width ?? 200
+    })
+    const dpiSet = [1, 2, 3];
+    const srcset = dpiSet.map((dpi) => {
+      return `${resolveAEMImageUrl(imageUrl, seoNameString, {
+        ...options,
+        quality: options.quality ?? 80,
+        width: (options.width ?? 200) * dpi,
+      })} ${dpi}x`;
+    });
+    imageUrlArray.push({ src, srcset });
   }
 
-  return imageUrlArray;
+  return imageUrlArray
 };
 
 export { generateOptimizedImages, generateOptimizedAEMImages, getProductImageURLs };
