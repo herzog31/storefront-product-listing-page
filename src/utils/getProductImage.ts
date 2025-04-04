@@ -7,7 +7,7 @@ accordance with the terms of the Adobe license agreement accompanying
 it.
 */
 
-import { ProductViewMedia } from '../types/interface';
+import { AssetSourceAem, Product, ProductViewMedia } from '../types/interface';
 
 const getProductImageURLs = (
   images: ProductViewMedia[],
@@ -96,4 +96,34 @@ const generateOptimizedImages = (
   return imageUrlArray;
 };
 
-export { generateOptimizedImages, getProductImageURLs };
+const generateOptimizedAEMImages = (
+    imageUrls: string[],
+    product: Product['product'],
+    options: AssetSourceAem
+): { src: string; srcset: any }[] => {
+  console.log(options);
+  const seoName = options.seoName(product);
+  const format = options.format;
+
+  const imageUrlArray: Array<{ src: string, srcset: string }> = [];
+
+  for (const imageUrl of imageUrls) {
+    const [base] = imageUrl.split('?');
+    const queryParams = new URLSearchParams();
+    if (options.rotate) queryParams.append('rotate', options.rotate.toString());
+    if (options.crop) queryParams.append('crop', options.crop.join(','));
+    if (options.flip) queryParams.append('flip', options.flip);
+    if (options.size) queryParams.append('size', options.size.join(','));
+    if (options.width) queryParams.append('width', options.width.toString());
+    if (options.height) queryParams.append('height', options.height.toString());
+    if (options.quality) queryParams.append('quality', options.quality.toString());
+    if (options.smartCrop) queryParams.append('smartCrop', options.smartCrop);
+    if (options.attachment) queryParams.append('attachment', options.attachment);
+    const src = `${base}/as/${seoName}.${format}?${queryParams.toString()}`;
+    imageUrlArray.push({ src: src, srcset: src });
+  }
+
+  return imageUrlArray;
+};
+
+export { generateOptimizedImages, generateOptimizedAEMImages, getProductImageURLs };
